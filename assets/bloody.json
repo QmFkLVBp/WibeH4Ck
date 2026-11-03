@@ -1,0 +1,1184 @@
+{
+  "source": "https://patorjk.com/software/taag/",
+  "font": "Bloody Cyan (TheDraw)",
+  "note": "A-Z exported from TAAG; 4 is a local extension.",
+  "height": 10,
+  "glyphs": {
+    "A": [
+      [
+        " ▄▄▄      ",
+        "ccccdddddd"
+      ],
+      [
+        "▒▄▀ █▄    ",
+        "chhhccdddd"
+      ],
+      [
+        "▒██  ▀█▄  ",
+        "chcwwcccdd"
+      ],
+      [
+        "░▄█▄▄▄▄██ ",
+        "chcccccccd"
+      ],
+      [
+        " ▓█   ▓██▒",
+        "cccwwwcccc"
+      ],
+      [
+        " ▒▒   ▓▒█░",
+        "cccwwwcccc"
+      ],
+      [
+        "  ▒   ▒▒ ░",
+        "cwcwwwccwc"
+      ],
+      [
+        "  ░   ▒   ",
+        "cwcwwwcddd"
+      ],
+      [
+        "      ░  ░",
+        "wwwwwwcwwc"
+      ],
+      [
+        "          ",
+        "dddddddddd"
+      ]
+    ],
+    "B": [
+      [
+        " ▄▄▄▄   ",
+        "dccccddd"
+      ],
+      [
+        "▓█▄ ██▄ ",
+        "cchhcccd"
+      ],
+      [
+        "▒██▒ ▄██",
+        "chccdccc"
+      ],
+      [
+        "▒▄ ░█▀  ",
+        "chhcccdd"
+      ],
+      [
+        "░▓█   █▓",
+        "cccdddcc"
+      ],
+      [
+        "░▒▒███▀▒",
+        "cccccccc"
+      ],
+      [
+        "▒░▒   ░ ",
+        "cccdddcd"
+      ],
+      [
+        " ░    ░ ",
+        "dcddddcd"
+      ],
+      [
+        " ░      ",
+        "dcdddddd"
+      ],
+      [
+        "      ░ ",
+        "ddddddcd"
+      ]
+    ],
+    "C": [
+      [
+        " ▄█▄  ▄  ",
+        "wcchhhcdd"
+      ],
+      [
+        "▓ █▀ ▀█  ",
+        "chhcwccdd"
+      ],
+      [
+        "▒▓█    ▄ ",
+        "cccwwwccd"
+      ],
+      [
+        "▒▒▒▄ ▄  ▒",
+        "ccccwchhc"
+      ],
+      [
+        "▒ ▒   ▀ ░",
+        "ccchhhcwc"
+      ],
+      [
+        "░ ░▒ ▓  ░",
+        "cwccwcwwc"
+      ],
+      [
+        "  ░  ▒   ",
+        "cwcwwcddd"
+      ],
+      [
+        "░        ",
+        "cdddddddd"
+      ],
+      [
+        "░ ░      ",
+        "cwcdddddd"
+      ],
+      [
+        "░        ",
+        "cdddddddd"
+      ]
+    ],
+    "D": [
+      [
+        "▓█▄███▄ ",
+        "cchccccd"
+      ],
+      [
+        "▒██▀ ██▌",
+        "chccwccc"
+      ],
+      [
+        "░█    █▌",
+        "chhcwccc"
+      ],
+      [
+        "░▓█▄   ▌",
+        "ccccwwcc"
+      ],
+      [
+        "░▒████▓ ",
+        "cccccccd"
+      ],
+      [
+        " ▒▒▓  ▒ ",
+        "wcccwwcd"
+      ],
+      [
+        " ░ ▒  ▒ ",
+        "wcccwwcd"
+      ],
+      [
+        " ░ ░  ░ ",
+        "wcwcwwcd"
+      ],
+      [
+        "   ░    ",
+        "wwwcdddd"
+      ],
+      [
+        " ░      ",
+        "wcdddddd"
+      ]
+    ],
+    "E": [
+      [
+        "▓ ▄▄██ ",
+        "chhhccd"
+      ],
+      [
+        "▓█   ▀ ",
+        "chhwwcd"
+      ],
+      [
+        "▒█ █   ",
+        "chhcddd"
+      ],
+      [
+        "▒▓█  ▄ ",
+        "cccwwcd"
+      ],
+      [
+        "░▒████▒",
+        "ccccccc"
+      ],
+      [
+        "░░ ▒░ ░",
+        "ccwccwc"
+      ],
+      [
+        " ░ ░  ░",
+        "ccwcwwc"
+      ],
+      [
+        "   ░   ",
+        "cwwcddd"
+      ],
+      [
+        "   ░  ░",
+        "wwwcwwc"
+      ],
+      [
+        "       ",
+        "ddddddd"
+      ]
+    ],
+    "F": [
+      [
+        "  █    ▒",
+        "wcchhhhc"
+      ],
+      [
+        "▓▀    ▒ ",
+        "chhwwwcd"
+      ],
+      [
+        "▒█ █  ░ ",
+        "chhcwwcd"
+      ],
+      [
+        "░▓█▒  ░ ",
+        "ccccwwcd"
+      ],
+      [
+        "░▒█░    ",
+        "ccccdddd"
+      ],
+      [
+        " ▒ ░    ",
+        "ccwcdddd"
+      ],
+      [
+        " ░      ",
+        "ccdddddd"
+      ],
+      [
+        " ░ ░    ",
+        "ccwcdddd"
+      ],
+      [
+        "        ",
+        "dddddddd"
+      ],
+      [
+        "        ",
+        "dddddddd"
+      ]
+    ],
+    "G": [
+      [
+        " ▄████  ",
+        "wcccccdd"
+      ],
+      [
+        " ██▒ ▀█▒",
+        "wchcwccc"
+      ],
+      [
+        "▒ ▄░▄▄▄░",
+        "chhccccc"
+      ],
+      [
+        "░▓█  ██▓",
+        "cccwwccc"
+      ],
+      [
+        "░▒▒███▀▒",
+        "cccccccc"
+      ],
+      [
+        " ░▒   ▒ ",
+        "wccwwwcd"
+      ],
+      [
+        "  ░   ░ ",
+        "cwcwwwcd"
+      ],
+      [
+        "░ ░   ░ ",
+        "cwcwwwcd"
+      ],
+      [
+        "      ░ ",
+        "wwwwwwcd"
+      ],
+      [
+        "        ",
+        "dddddddd"
+      ]
+    ],
+    "H": [
+      [
+        " ▄█▒ ██ ",
+        "whccwccd"
+      ],
+      [
+        "▓██░ █▄▒",
+        "chccwchc"
+      ],
+      [
+        "▒███▀██░",
+        "cbcccchc"
+      ],
+      [
+        "░▓█ ▓██ ",
+        "cccwcchd"
+      ],
+      [
+        "░▓█▒▓ ▄▓",
+        "ccccchhc"
+      ],
+      [
+        " ▒ ░▓▒░▒",
+        "wcwccccc"
+      ],
+      [
+        " ▒ ░▒░ ░",
+        "wcwcccwc"
+      ],
+      [
+        " ░  ░░ ░",
+        "wcwwccwc"
+      ],
+      [
+        " ░  ░  ░",
+        "wcwwcwwc"
+      ],
+      [
+        "        ",
+        "dddddddd"
+      ]
+    ],
+    "I": [
+      [
+        " ██▓",
+        "wccc"
+      ],
+      [
+        "▓▐█▒",
+        "chcc"
+      ],
+      [
+        "▒ █▒",
+        "chcc"
+      ],
+      [
+        "░▐ ░",
+        "chhc"
+      ],
+      [
+        "░▐█░",
+        "chcc"
+      ],
+      [
+        "░▓  ",
+        "ccdd"
+      ],
+      [
+        " ▒ ░",
+        "wcwc"
+      ],
+      [
+        " ▒ ░",
+        "wcwc"
+      ],
+      [
+        " ░  ",
+        "wcdd"
+      ],
+      [
+        "    ",
+        "dddd"
+      ]
+    ],
+    "J": [
+      [
+        " ▄▄▄██▀▀▀",
+        "ccccccccc"
+      ],
+      [
+        "   ▒██   ",
+        "cwwcchddd"
+      ],
+      [
+        "   ░██   ",
+        "cwwcchddd"
+      ],
+      [
+        "▓██▄ ▄▓  ",
+        "cccchhcdd"
+      ],
+      [
+        " ▓█▀▀▒   ",
+        "ccchhcddd"
+      ],
+      [
+        " ▒▓▒▒░   ",
+        "wcccccddd"
+      ],
+      [
+        " ▒ ░▒░   ",
+        "wcwcccddd"
+      ],
+      [
+        " ░ ░ ░   ",
+        "wcwcwcddd"
+      ],
+      [
+        " ░   ░   ",
+        "wcwwwcddd"
+      ],
+      [
+        "         ",
+        "ddddddddd"
+      ]
+    ],
+    "K": [
+      [
+        " ██ ▄█▀",
+        "wccwccc"
+      ],
+      [
+        " ██▄█▒ ",
+        "whccccd"
+      ],
+      [
+        "▓███▄░ ",
+        "chccccd"
+      ],
+      [
+        "▓██ █▄ ",
+        "chcwccd"
+      ],
+      [
+        "▒▄█▓ █▄",
+        "chccwcc"
+      ],
+      [
+        "▒ ▒▒ ▓▒",
+        "cwccwcc"
+      ],
+      [
+        "░ ░▒ ▒░",
+        "cwccwcc"
+      ],
+      [
+        "░ ░░ ░ ",
+        "cwccwcd"
+      ],
+      [
+        "░  ░   ",
+        "cwwcddd"
+      ],
+      [
+        "       ",
+        "ddddddd"
+      ]
+    ],
+    "L": [
+      [
+        " ██▓    ",
+        "wcccdddd"
+      ],
+      [
+        "▓██▒    ",
+        "ccccdddd"
+      ],
+      [
+        "▒██░    ",
+        "chccdddd"
+      ],
+      [
+        "▒█ ░    ",
+        "chhcdddd"
+      ],
+      [
+        "░▄█████▒",
+        "chcccccc"
+      ],
+      [
+        "░ ▒░▓  ░",
+        "cwcccwwc"
+      ],
+      [
+        "░ ░ ▒  ░",
+        "cwcwcwwc"
+      ],
+      [
+        "  ░ ░   ",
+        "wwcwcddd"
+      ],
+      [
+        "    ░  ░",
+        "wwwwcwwc"
+      ],
+      [
+        "        ",
+        "dddddddd"
+      ]
+    ],
+    "M": [
+      [
+        " ███▄ ▄█▀█▓",
+        "wccccwcchcc"
+      ],
+      [
+        "▓██▒▀█▀ ██▒",
+        "chcccccwhcc"
+      ],
+      [
+        "▓██    ▓█ ░",
+        "chccwwwchhc"
+      ],
+      [
+        "▒██    ▒   ",
+        "chcwwwwchhd"
+      ],
+      [
+        "▒▄█▒   ░ █▒",
+        "chccwwwchcc"
+      ],
+      [
+        "░ ▒░   ░  ░",
+        "cwccwwwcwwc"
+      ],
+      [
+        "░  ░      ░",
+        "cwwcwwwwwwc"
+      ],
+      [
+        "░      ░   ",
+        "cwwwwwwcddd"
+      ],
+      [
+        "       ░   ",
+        "wwwwwwwcddd"
+      ],
+      [
+        "           ",
+        "ddddddddddd"
+      ]
+    ],
+    "N": [
+      [
+        " █▄ ▄      ",
+        "wchhcdddddd"
+      ],
+      [
+        " ██ ▀█   █ ",
+        "whcwcccwccd"
+      ],
+      [
+        "▓██  ▀█ ██▒",
+        "chcwwccwccc"
+      ],
+      [
+        "▓██▒  ▐ ██▒",
+        "ccccwwccccc"
+      ],
+      [
+        "▒██░   ▓██░",
+        "ccccwwwcccc"
+      ],
+      [
+        "░ ▒░   ▒ ▓ ",
+        "cwccwwwcwcd"
+      ],
+      [
+        "░ ░░   ░ ▒░",
+        "cwccwwwcwcc"
+      ],
+      [
+        "   ░   ░ ░ ",
+        "wwwcwwwcwcd"
+      ],
+      [
+        "         ░ ",
+        "wwwwwwwwwcd"
+      ],
+      [
+        "           ",
+        "ddddddddddd"
+      ]
+    ],
+    "O": [
+      [
+        " ▓█▄▄██  ",
+        "wcchhccdd"
+      ],
+      [
+        "▓██▒  ██▓",
+        "cchcwwccc"
+      ],
+      [
+        "▒██░  ██▒",
+        "cchcwwhcc"
+      ],
+      [
+        "▒██  ▄▀▒░",
+        "cccwwhhcc"
+      ],
+      [
+        "░ █▀▀ ▓▒░",
+        "cwchhhccc"
+      ],
+      [
+        "░ ▒░▓░▓░ ",
+        "cwccccccd"
+      ],
+      [
+        "  ░ ▒ ▒░ ",
+        "wwcwcwccd"
+      ],
+      [
+        "░ ░ ░ ▒  ",
+        "cwcwcwcdd"
+      ],
+      [
+        "    ░ ░  ",
+        "wwwwcwcdd"
+      ],
+      [
+        "         ",
+        "ddddddddd"
+      ]
+    ],
+    "P": [
+      [
+        " ██▒███  ",
+        "wccccccdd"
+      ],
+      [
+        "▓██░  ██▓",
+        "chccwcccc"
+      ],
+      [
+        "▓██░ ██▓▒",
+        "chccccccc"
+      ],
+      [
+        "▒▄ ▄█▒▓ ▒",
+        "chhccccwc"
+      ],
+      [
+        "▒██▒ ░  ░",
+        "ccccwcwwc"
+      ],
+      [
+        "▒▓▒░ ░  ░",
+        "ccccwcwwc"
+      ],
+      [
+        "░▒ ░     ",
+        "ccwcddddd"
+      ],
+      [
+        "░░       ",
+        "ccddddddd"
+      ],
+      [
+        "         ",
+        "ddddddddd"
+      ],
+      [
+        "         ",
+        "ddddddddd"
+      ]
+    ],
+    "Q": [
+      [
+        "  █▄▄▄█  ",
+        "wcchhhcdd"
+      ],
+      [
+        "▓█▀▓  ██▒",
+        "cchcwwccc"
+      ],
+      [
+        "▒██▒  ██░",
+        "ccccwwccc"
+      ],
+      [
+        "░██  █▀ ░",
+        "cccwwccwc"
+      ],
+      [
+        "░▒███▒█▄ ",
+        "ccccccccd"
+      ],
+      [
+        "░░ ▓▒░ ▒ ",
+        "ccwcccwcd"
+      ],
+      [
+        " ░ ▒░  ░ ",
+        "wccccwwcd"
+      ],
+      [
+        "   ░   ░ ",
+        "wwwccwwcd"
+      ],
+      [
+        "    ░    ",
+        "wwwwcdddd"
+      ],
+      [
+        "         ",
+        "ddddddddd"
+      ]
+    ],
+    "R": [
+      [
+        " ██ ███  ",
+        "wccwcccdd"
+      ],
+      [
+        "▓██ ▒ ██▓",
+        "chcwcwccc"
+      ],
+      [
+        "▓██ ░▄█ ▒",
+        "chcwcccwc"
+      ],
+      [
+        "▒▄█▀▀█▄  ",
+        "chcccccdd"
+      ],
+      [
+        "░██▓ ▒██▒",
+        "ccccwcccc"
+      ],
+      [
+        "░ ▒▓ ░▒▓░",
+        "cwccwcccc"
+      ],
+      [
+        "  ░▒ ░ ▒░",
+        "wwccwcwcc"
+      ],
+      [
+        "  ░░   ░ ",
+        "wwccwwwcd"
+      ],
+      [
+        "   ░     ",
+        "wwwcddddd"
+      ],
+      [
+        "         ",
+        "ddddddddd"
+      ]
+    ],
+    "S": [
+      [
+        "   ▄▄██  ",
+        "wwhhhccdd"
+      ],
+      [
+        "▒ ▀   ▒  ",
+        "chhwwwcdd"
+      ],
+      [
+        "░ ▓██▄   ",
+        "cwccccddd"
+      ],
+      [
+        "  ▒   ▄█▓",
+        "wwcwcchcc"
+      ],
+      [
+        "▓███▄▄▀▒▒",
+        "cccchhhcc"
+      ],
+      [
+        "▒ ▒▓▒ ▒ ░",
+        "cwcccwcwc"
+      ],
+      [
+        "░ ░▒  ░ ░",
+        "cwccwwcwc"
+      ],
+      [
+        "░  ░  ░  ",
+        "cwccwwcdd"
+      ],
+      [
+        "      ░  ",
+        "wwwwwwcdd"
+      ],
+      [
+        "         ",
+        "ddddddddd"
+      ]
+    ],
+    "T": [
+      [
+        "▄▄▄█▄███▓",
+        "cccchcccc"
+      ],
+      [
+        "▓  ██▒ ▓▒",
+        "cwwhccwcc"
+      ],
+      [
+        "▒ ▓██░ ▒░",
+        "cwchccwcc"
+      ],
+      [
+        "░ ▓▄█▓ ░ ",
+        "cwchccwcd"
+      ],
+      [
+        "  ▒██▒ ░ ",
+        "wwccccwcd"
+      ],
+      [
+        "  ▒ ░░   ",
+        "wwcwccddd"
+      ],
+      [
+        "    ░    ",
+        "wwwwcdddd"
+      ],
+      [
+        "  ░      ",
+        "wwcdddddd"
+      ],
+      [
+        "         ",
+        "ddddddddd"
+      ],
+      [
+        "         ",
+        "ddddddddd"
+      ]
+    ],
+    "U": [
+      [
+        " █    ██ ",
+        "cccwwwccd"
+      ],
+      [
+        " ██  ▓▀█▒",
+        "wccwwchcc"
+      ],
+      [
+        "▓██  ▒██░",
+        "cccwwchcc"
+      ],
+      [
+        "▓▓█  ░██░",
+        "cccwwchcc"
+      ],
+      [
+        "▒▒███▄▀▓ ",
+        "ccccchhcd"
+      ],
+      [
+        "░▒▓▒ ▒ ▒ ",
+        "ccccwcwcd"
+      ],
+      [
+        "░░▒░ ░ ░ ",
+        "ccccwcwcd"
+      ],
+      [
+        " ░░░ ░ ░ ",
+        "wcccwcwcd"
+      ],
+      [
+        "   ░     ",
+        "wwwcddddd"
+      ],
+      [
+        "         ",
+        "ddddddddd"
+      ]
+    ],
+    "V": [
+      [
+        " █▀▒   █▓",
+        "wchcwwwcc"
+      ],
+      [
+        "▓██░   █▒",
+        "cchcwwwcc"
+      ],
+      [
+        " ▓▀▄  █▒░",
+        "cchhwwccc"
+      ],
+      [
+        "  ▒██ █░░",
+        "cwcchwccc"
+      ],
+      [
+        "   ▒▀█ ░ ",
+        "wwwcchwcd"
+      ],
+      [
+        "   ░ ▐ ░ ",
+        "wwwcwcwcd"
+      ],
+      [
+        "   ░ ░░  ",
+        "wwwcwccdd"
+      ],
+      [
+        "     ░░  ",
+        "wwwwwccdd"
+      ],
+      [
+        "      ░  ",
+        "wwwwwwcdd"
+      ],
+      [
+        "     ░   ",
+        "wwwwwcddd"
+      ]
+    ],
+    "W": [
+      [
+        " █▀   █░",
+        "wchwwwcc"
+      ],
+      [
+        "▓██▓█▒█░",
+        "cchccccc"
+      ],
+      [
+        "▒██▒█░█ ",
+        "cchccccd"
+      ],
+      [
+        "░▒█░█ █ ",
+        "cccccwcd"
+      ],
+      [
+        "░░██▒██▓",
+        "cccccccc"
+      ],
+      [
+        " ░ ▓░▒ ▒",
+        "wcwcccwc"
+      ],
+      [
+        "   ▒ ░ ░",
+        "wwwcwcwc"
+      ],
+      [
+        "   ░   ░",
+        "wwwcwwwc"
+      ],
+      [
+        "     ░  ",
+        "wwwwwcdd"
+      ],
+      [
+        "        ",
+        "dddddddd"
+      ]
+    ],
+    "X": [
+      [
+        "▓▄▄   ▄▄▒",
+        "chhwwwhhc"
+      ],
+      [
+        "▒▒ ▀ ▀ ▒░",
+        "ccwhwhwcc"
+      ],
+      [
+        "░░      ░",
+        "ccwwhwwwc"
+      ],
+      [
+        " ░ ▄ ▄ ▒ ",
+        "wcwhwhwcd"
+      ],
+      [
+        "▓▀▀▒ ▒▀▀▒",
+        "chhcwchhc"
+      ],
+      [
+        "▒▒ ░ ░▓ ░",
+        "ccwcwccwc"
+      ],
+      [
+        "░░   ░▒ ░",
+        "ccwwwccwc"
+      ],
+      [
+        " ░    ░  ",
+        "wcwwwwcdd"
+      ],
+      [
+        " ░    ░  ",
+        "wcwwwwcdd"
+      ],
+      [
+        "         ",
+        "ddddddddd"
+      ]
+    ],
+    "Y": [
+      [
+        "▓██   ▀█▓",
+        "cccwwwhcc"
+      ],
+      [
+        " ▒██  ██▒",
+        "wcccwwhcc"
+      ],
+      [
+        "  ▒██ ██░",
+        "wwcccwhcc"
+      ],
+      [
+        "  ░ ▐▀█▓░",
+        "wwcwchccc"
+      ],
+      [
+        "  ░ ██▒▓░",
+        "wwcwccccc"
+      ],
+      [
+        "   ██▒▒▒ ",
+        "wwwcccccd"
+      ],
+      [
+        " ▓██ ░▒░ ",
+        "wcccwcccd"
+      ],
+      [
+        " ▒ ▒ ░░  ",
+        "wcwcwccdd"
+      ],
+      [
+        " ░ ░     ",
+        "wcwcddddd"
+      ],
+      [
+        " ░ ░     ",
+        "wcwcddddd"
+      ]
+    ],
+    "Z": [
+      [
+        "▓███████▒",
+        "ccccccccc"
+      ],
+      [
+        "▒ ▒    █░",
+        "cwcwccwcc"
+      ],
+      [
+        "░ █████ ░",
+        "cwcccccwc"
+      ],
+      [
+        " █     ▓ ",
+        "wcccwwwcd"
+      ],
+      [
+        "▒▀▄▄▄▄██▓",
+        "chhhhhccc"
+      ],
+      [
+        "░▒▒ ▓░▒░▒",
+        "cccwccccc"
+      ],
+      [
+        "░░▒ ▒ ░ ▒",
+        "cccwcwcwc"
+      ],
+      [
+        "░ ░ ░ ░ ░",
+        "cccwcwcwc"
+      ],
+      [
+        "  ░ ░    ",
+        "wwcwcdddd"
+      ],
+      [
+        "░        ",
+        "cdddddddd"
+      ]
+    ],
+    "4": [
+      [
+        " ██  ██▓ ",
+        "ccccccccc"
+      ],
+      [
+        "▓██  ██▒ ",
+        "ccccccccc"
+      ],
+      [
+        "▒██▄▄██░ ",
+        "ccchhcccc"
+      ],
+      [
+        "░▀▀▀▀██  ",
+        "ccccccccc"
+      ],
+      [
+        "     ██▓ ",
+        "ccccccccc"
+      ],
+      [
+        "     ▓▒░ ",
+        "ccccccccc"
+      ],
+      [
+        "     ▒ ░ ",
+        "ccccccccc"
+      ],
+      [
+        "     ░   ",
+        "ccccccccc"
+      ],
+      [
+        "     ░ ░ ",
+        "ccccccccc"
+      ],
+      [
+        "         ",
+        "ccccccccc"
+      ]
+    ],
+    " ": [
+      [
+        "   ",
+        "ddd"
+      ],
+      [
+        "   ",
+        "ddd"
+      ],
+      [
+        "   ",
+        "ddd"
+      ],
+      [
+        "   ",
+        "ddd"
+      ],
+      [
+        "   ",
+        "ddd"
+      ],
+      [
+        "   ",
+        "ddd"
+      ],
+      [
+        "   ",
+        "ddd"
+      ],
+      [
+        "   ",
+        "ddd"
+      ],
+      [
+        "   ",
+        "ddd"
+      ],
+      [
+        "   ",
+        "ddd"
+      ]
+    ]
+  }
+}

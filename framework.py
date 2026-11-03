@@ -1,9 +1,19 @@
 #!/usr/bin/env python3
 """framework.py — минималистичное ядро RCE-фреймворка для HTB/THM."""
-import sys, importlib, threading, socket, argparse, shlex, select, shutil
+import sys
+import os
+import importlib
+import threading
+import socket
+import argparse
+import shlex
+import select
+import shutil
 import re
 from pathlib import Path
 from typing import Dict, Any, Optional, List
+
+from terminal_ui import Terminal, module_style
 
 try:
     import readline
@@ -12,16 +22,16 @@ except ImportError:
 
 
 class C:
-    R="\033[91m"
-    G="\033[92m"
-    Y="\033[93m"
-    B="\033[94m"
-    M="\033[95m"
-    CY="\033[96m"
-    W="\033[97m"
-    DIM="\033[2m"
-    BOLD="\033[1m"
-    END="\033[0m"
+    R = "\033[91m"
+    G = "\033[92m"
+    Y = "\033[93m"
+    B = "\033[94m"
+    M = "\033[95m"
+    CY = "\033[96m"
+    W = "\033[97m"
+    DIM = "\033[2m"
+    BOLD = "\033[1m"
+    END = "\033[0m"
 
 
 def require(*bins: str) -> List[str]:
@@ -123,7 +133,7 @@ class Module:
 
 
 class Listener:
-    def init(self, host: str = "0.0.0.0", port: int = 4444):
+    def __init__(self, host: str = "0.0.0.0", port: int = 4444):
         self.host, self.port = host, port
 
     def start(self) -> None:
@@ -136,7 +146,9 @@ class Listener:
         def serve():
             try:
                 cl, ad = s.accept()
-                print(f"\n{C.G}[+] Connection from {ad[0]}:{ad[1]}{C.END}")
+                print(
+                    f"\n{C.G}[+] Connection from {ad[0]}:{ad[1]}{C.END}"
+                )
                 interactive_shell(cl)
             except Exception as e:
                 print(f"{C.R}[!] Listener error: {e}{C.END}")
@@ -147,27 +159,32 @@ class Listener:
 
 
 class Registry:
-    def init(self, modules_dir: Optional[Path] = None):
-        self.modules_dir = modules_dir or (Path(file).parent / "modules")
+    def __init__(self, modules_dir: Optional[Path] = None):
+        self.modules_dir = modules_dir or (Path(__file__).parent / "modules")
         self.modules: Dict[str, Module] = {}
         self._load()
 
-    def load(self) -> None:
+    def _load(self) -> None:
         if not self.modules_dir.exists():
-            print(f"{C.R}[!] modules/ not found at {self.modules_dir}{C.END}")
+            print(
+                f"{C.R}[!] modules/ not found at {self.modules_dir}{C.END}"
+            )
             return
         parent = self.modules_dir.parent
         if str(parent) not in sys.path:
             sys.path.insert(0, str(parent))
         for f in sorted(self.modules_dir.glob("*.py")):
-            if f.name.startswith("") or f.name == "init.py":
+            if f.name.startswith("_") or f.name == "__init__.py":
                 continue
             try:
                 m = importlib.import_module(f"modules.{f.stem}")
                 for attr in dir(m):
                     obj = getattr(m, attr)
-                    if (isinstance(obj, type) and issubclass(obj, Module)
-                            and obj is not Module):
+                    if (
+                        isinstance(obj, type)
+                        and issubclass(obj, Module)
+                        and obj is not Module
+                    ):
                         inst = obj()
                         self.modules[inst.name] = inst
             except Exception as e:
@@ -175,52 +192,115 @@ class Registry:
 
 
 class UI:
-    def init(self, registry: Registry):
+    commands = (
+        "use", "set", "unset", "show", "options", "run", "exploit",
+        "exit", "quit", "back", "help", "info", "modules", "listener",
+        "menu", "home", "search", "banner", "clear",
+    )
+
+    def __init__(self, registry: Registry, show_banner=True):
         self.registry = registry
         self.current: Optional[Module] = None
+        self.terminal = Terminal(C)
+        self.show_banner = show_banner
         self._setup_completion()
+
+    def _module_items(self):
+        return sorted(self.registry.modules.items())
 
     def _setup_completion(self):
         if not readline:
             return
 
         def completer(text, state):
-            opts = ["use", "set", "unset", "show", "run", "exploit", "exit", "quit",
-                    "back", "help", "info", "modules", "listener"]
-            if self.current:
-                opts += list(self.current.options.keys())
-            matches = [o for o in opts if o.lower().startswith(text.lower())]
+            line = readline.get_line_buffer().lstrip()
+            command = line.split()[0].lower() if line.split() else ""
+            if readline.get_begidx() == 0:
+                opts = list(self.commands)
+            elif command == "use":
+                opts = list(self.registry.modules)
+                opts += [
+                    module_style(mod)["path"]
+                    for _, mod in self._module_items()
+                ]
+                opts += [
+                    str(i) for i in range(1, len(self.registry.modules) + 1)
+                ]
+            elif command in ("set", "unset") and self.current:
+                opts = list(self.current.options)
+            elif command == "show":
+                opts = ["options", "modules"]
+            else:
+                opts = []
+            matches = sorted({
+                opt for opt in opts
+                if opt.lower().startswith(text.lower())
+            })
             return matches[state] if state < len(matches) else None
 
         readline.set_completer(completer)
-        readline.parse_and_bind("tab: complete")
+        readline.set_completer_delims(" \t\n")
+        if "libedit" in (readline.__doc__ or ""):
+            readline.parse_and_bind("bind ^I rl_complete")
+        else:
+            readline.parse_and_bind("tab: complete")
 
     def banner(self):
-        print(f"""{C.CY}{C.BOLD}
+        self.terminal.art("WIBEH4CK")
+        self.terminal.heading("WibeH4Ck // INTERACTIVE CONSOLE")
+        categories = {
+            module_style(mod)["category"]
+            for _, mod in self._module_items()
+        }
+        self.terminal.note(
+            f"{len(self.registry.modules)} modules  /  "
+            f"{len(categories)} categories  /  HTB + THM"
+        )
+        self.terminal.note("Bloody Cyan  |  QmFkLVBp")
 
-| _ \/ | | / _| | | | | _|
-| / (| | \ \ | | | || | | |
-||\\|| |/ || \/ ||
-{C.END}{C.DIM} mini RCE framework — HTB/THM friendly{C.END}
-""")
+    def menu(self):
+        rows = [
+            (str(i), name, module_style(mod)["category"])
+            for i, (name, mod) in enumerate(self._module_items(), 1)
+        ]
+        self.terminal.table(
+            "MODULE MENU", ("#", "Module", "Category"), rows
+        )
+        self.terminal.note("Select: <number> or use <module>")
+        self.terminal.note(
+            "help = commands  |  search <text> = filter  |  exit = quit"
+        )
+        print()
 
     def prompt(self) -> str:
-        tag = f"{C.Y}({self.current.name}){C.END}" if self.current else f"{C.DIM}(no module){C.END}"
-        return f"{C.G}rce{C.END} {tag} > "
+        def style(code):
+            if code and readline:
+                return f"\001{code}\002"
+            return code
+
+        prompt = f"{style(C.BOLD)}{style(C.CY)}wibe{style(C.END)}"
+        if self.current:
+            path = module_style(self.current)["path"]
+            prompt += f" {style(C.Y)}({path}){style(C.END)}"
+        return prompt + " > "
 
     def run(self):
-        self.banner()
-        print(f"{C.DIM}Type 'help' or 'modules'. Tab-completion works.{C.END}\n")
+        if self.show_banner:
+            self.banner()
+        self.menu()
         while True:
             try:
                 line = input(self.prompt()).strip()
-            except (EOFError, KeyboardInterrupt):
+            except EOFError:
                 print()
                 break
+            except KeyboardInterrupt:
+                print()
+                continue
             if not line:
                 continue
-            parts = shlex.split(line)
             try:
+                parts = shlex.split(line)
                 self.dispatch(parts[0].lower(), parts[1:])
             except SystemExit:
                 raise
@@ -234,62 +314,145 @@ class UI:
             self.help()
         elif cmd == "modules":
             self.list_modules()
-        elif cmd == "use":
-            self.use(args)
+        elif cmd == "search":
+            self.list_modules(" ".join(args))
+        elif cmd == "menu":
+            self.menu()
+        elif cmd == "home":
+            self.current = None
+            self.banner()
+            self.menu()
+        elif cmd == "banner":
+            if self.current:
+                self.terminal.art(module_style(self.current)["title"])
+            else:
+                self.banner()
+        elif cmd == "clear":
+            self.terminal.clear()
+            if self.current:
+                self.module_info()
+            else:
+                self.banner()
+                self.menu()
+        elif cmd == "use" or (cmd.isdigit() and not args):
+            self.use(args if cmd == "use" else [cmd])
         elif cmd == "set":
             self.set_opt(args)
         elif cmd == "unset":
             self.unset_opt(args)
         elif cmd == "show":
             self.show(args)
+        elif cmd == "options":
+            self.show(["options"])
         elif cmd in ("run", "exploit", "r", "x"):
             self.do_run()
         elif cmd == "back":
             self.current = None
             print(f"{C.Y}[*] Module unloaded{C.END}")
+            self.menu()
         elif cmd == "listener":
             self.listener_cmd(args)
         elif cmd == "info":
-            if self.current:
-                self.current.info()
-            else:
-                print(f"{C.R}No module loaded.{C.END}")
+            self.module_info()
         else:
             print(f"{C.R}Unknown command: {cmd} (try 'help'){C.END}")
 
     def help(self):
-        print(f"""
-{C.BOLD}Commands:{C.END}
-modules list available modules
-use <name> select module
-info show current module info
-show options show options
-set <OPT> <value> set option
-unset <OPT> clear option
-run | exploit | x execute module
-listener <port> background reverse-shell listener
-back unload module
-exit | quit leave
-""")
+        self.terminal.table(
+            "CONSOLE COMMANDS",
+            ("Command", "Description"),
+            [
+                ("menu / home", "Show menu / return to the main screen"),
+                ("modules", "List all modules and categories"),
+                ("search <text>", "Filter by name, category or description"),
+                (
+                    "use <name|number>",
+                    "Select a module; number alone works too",
+                ),
+                ("info", "Show the selected module and its Bloody art"),
+                (
+                    "show options / options",
+                    "Show current values and requirements",
+                ),
+                ("set <OPT> <value>", "Set a module option"),
+                ("unset <OPT>", "Clear a module option"),
+                (
+                    "run / exploit / x",
+                    "Validate options and execute the module",
+                ),
+                ("listener <port>", "Start the TCP listener"),
+                ("back", "Unload the selected module"),
+                ("banner / clear", "Print the banner / redraw the screen"),
+                ("exit / quit", "Close WibeH4Ck"),
+            ],
+        )
+        self.terminal.note(
+            "Tab completes commands, module names and option names."
+        )
+        self.terminal.note(
+            "Example: use revshell -> set LHOST 127.0.0.1 -> show options"
+        )
 
-    def list_modules(self):
-        print(f"\n{C.BOLD}Modules:{C.END}\n")
-        if not self.registry.modules:
-            print(f" {C.DIM}(none — drop *.py files into modules/){C.END}")
-        for name, mod in sorted(self.registry.modules.items()):
-            print(f" {C.CY}{name:<22}{C.END} {mod.description}")
-        print()
+    def list_modules(self, query=""):
+        rows = []
+        for i, (name, mod) in enumerate(self._module_items(), 1):
+            meta = module_style(mod)
+            text = (
+                f"{name} {meta['category']} {meta['path']} {mod.description}"
+            )
+            if query.casefold() not in text.casefold():
+                continue
+            rows.append((str(i), name, meta["category"], mod.description))
+        self.terminal.table(
+            "MODULES" if not query else f"SEARCH :: {query}",
+            ("#", "Module", "Category", "Description"),
+            rows,
+        )
+        if not rows:
+            self.terminal.note("No modules matched.")
+
+    def module_info(self, with_options=False):
+        if not self.current:
+            print(f"{C.R}No module loaded. Use menu or use <module>.{C.END}")
+            return
+        meta = module_style(self.current)
+        self.terminal.art(meta["title"])
+        rows = [
+            ("Name", self.current.name),
+            ("Path", meta["path"]),
+            ("Category", meta["category"]),
+            ("Description", self.current.description),
+        ]
+        if self.current.author:
+            rows.append(("Author", self.current.author))
+        self.terminal.table("MODULE INFO", ("Field", "Value"), rows)
+        if with_options:
+            self.show(["options"])
+            self.terminal.note("Set options with set OPT value, then run.")
+            print()
 
     def use(self, args: List[str]):
         if not args:
-            print(f"{C.R}Usage: use <module>{C.END}")
+            print(f"{C.R}Usage: use <module|number>{C.END}")
             return
-        if args[0] not in self.registry.modules:
-            print(f"{C.R}No such module: {args[0]}{C.END}")
+        name = args[0]
+        items = self._module_items()
+        if name.isdigit():
+            index = int(name) - 1
+            if index < 0 or index >= len(items):
+                print(f"{C.R}No such module number: {name}{C.END}")
+                return
+            name = items[index][0]
+        else:
+            for module_name, mod in items:
+                if name == module_style(mod)["path"]:
+                    name = module_name
+                    break
+        if name not in self.registry.modules:
+            print(f"{C.R}No such module: {name}{C.END}")
             return
-        self.current = self.registry.modules[args[0]]
-        self.current.info()
-        print(f"\n{C.DIM}Set options with 'set OPT value', then 'run'.{C.END}")
+        self.current = self.registry.modules[name]
+        self.module_info(with_options=True)
 
     def set_opt(self, args: List[str]):
         if not self.current:
@@ -317,20 +480,31 @@ exit | quit leave
             print(f"{C.Y}{k} cleared{C.END}")
 
     def show(self, args: List[str]):
+        if args and args[0].lower() == "modules":
+            self.list_modules()
+            return
         if not args or args[0].lower() != "options":
-            print(f"{C.R}Usage: show options{C.END}")
+            print(f"{C.R}Usage: show options | show modules{C.END}")
             return
         if not self.current:
             print(f"{C.R}No module loaded.{C.END}")
             return
-        print(f"\n{C.BOLD}Options for {self.current.name}:{C.END}\n")
-        print(f" {'Name':<14} {'Req':<4} {'Value':<28} Description")
-        print(f" {'-' * 14} {'-' * 4} {'-' * 28} {'-' * 30}")
+        rows = []
         for k, v in self.current.options.items():
-            req = "*" if v.get("required") else ""
-            val = str(v.get("value") if v.get("value") is not None else "")
-            print(f" {C.CY}{k:<14}{C.END} {req:<4} {val:<28} {v.get('description','')}")
-        print()
+            value = "" if v.get("value") is None else str(v["value"])
+            rows.append(
+                (
+                    k,
+                    "yes" if v.get("required") else "no",
+                    value or "<unset>",
+                    v.get("description", ""),
+                )
+            )
+        self.terminal.table(
+            f"OPTIONS :: {self.current.name}",
+            ("Name", "Required", "Value", "Description"),
+            rows,
+        )
 
     def do_run(self):
         if not self.current:
@@ -342,35 +516,73 @@ exit | quit leave
             for e in errs:
                 print(f" {C.R}- {e}{C.END}")
             return
-        print(f"{C.Y}[] Running '{self.current.name}'...{C.END}\n")
+        print(f"{C.Y}[*] Running '{self.current.name}'...{C.END}\n")
         try:
             self.current.run()
         except NotImplementedError:
-            print(f"{C.R}Module '{self.current.name}' has no run() implemented.{C.END}")
+            print(
+                f"{C.R}Module '{self.current.name}' "
+                f"has no run() implemented.{C.END}"
+            )
         except KeyboardInterrupt:
-            print(f"\n{C.Y}[] Aborted.{C.END}")
+            print(f"\n{C.Y}[*] Aborted.{C.END}")
         except Exception as e:
-            print(f"{C.R}[!] Exploit error: {type(e).name}: {e}{C.END}")
+            print(f"{C.R}[!] Exploit error: {type(e).__name__}: {e}{C.END}")
 
     def listener_cmd(self, args: List[str]):
         if not args:
             print(f"{C.R}Usage: listener <port>{C.END}")
             return
-        try:
-            port = int(args[0])
-        except ValueError:
-            print(f"{C.R}Invalid port{C.END}")
+        err = validate_opt("LPORT", args[0])
+        if err:
+            print(f"{C.R}[!] {err}{C.END}")
             return
-        Listener(port=port).start()
+        Listener(port=int(args[0])).start()
+
+
+_ANSI_VALUES = {
+    name: getattr(C, name)
+    for name in ("R", "G", "Y", "B", "M", "CY", "W", "DIM", "BOLD", "END")
+}
+
+
+def configure_colors(no_color=False):
+    enabled = (
+        not no_color
+        and "NO_COLOR" not in os.environ
+        and os.environ.get("TERM") != "dumb"
+        and sys.stdout.isatty()
+    )
+    for name, value in _ANSI_VALUES.items():
+        setattr(C, name, value if enabled else "")
 
 
 def main():
-    p = argparse.ArgumentParser(description="mini RCE framework")
+    p = argparse.ArgumentParser(
+        prog="rce.py",
+        description="WibeH4Ck - modular HTB/THM terminal console",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog=(
+            "Examples:\n"
+            "  python3 rce.py                   open the console\n"
+            "  python3 rce.py -l                list modules\n"
+            "  python3 rce.py --no-color        plain terminal output\n"
+            "\nInside the console: menu, help, use <module>, show options."
+        ),
+    )
     p.add_argument("-m", "--module", help="run module directly")
-    p.add_argument("-o", "--option", action="append", default=[], metavar="K=V")
-    p.add_argument("-l", "--list", action="store_true")
+    p.add_argument(
+        "-o", "--option", action="append", default=[], metavar="K=V"
+    )
+    p.add_argument("-l", "--list", action="store_true", help="list modules")
+    p.add_argument(
+        "--no-color", action="store_true", help="disable ANSI colors"
+    )
+    p.add_argument(
+        "--no-banner", action="store_true", help="hide the startup art"
+    )
     a = p.parse_args()
-
+    configure_colors(a.no_color)
     reg = Registry()
 
     if a.list:
@@ -394,4 +606,4 @@ def main():
         m.run()
         return
 
-    UI(reg).run()
+    UI(reg, show_banner=not a.no_banner).run()
