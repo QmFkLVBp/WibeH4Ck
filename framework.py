@@ -3,17 +3,19 @@
 import sys
 import os
 import importlib
-import threading
-import socket
+import copy
+import ipaddress
+import queue
 import argparse
 import shlex
-import select
 import shutil
 import re
 from pathlib import Path
 from typing import Dict, Any, Optional, List
+from urllib.parse import urlsplit
 
 from terminal_ui import Terminal, module_style
+from sessions import Listener, SessionManager, interactive_shell
 
 try:
     import readline
@@ -43,57 +45,54 @@ def validate_opt(name: str, value: Any) -> Optional[str]:
     if value is None:
         return None
     v = str(value)
-    if name in ("LHOST", "TARGET") and "://" not in v:
-        if not re.match(r"^[a-zA-Z0-9._-]+$", v):
-            return f"{name}: похоже на некорректный хост/IP ({v})"
+    if any(ord(char) < 32 or ord(char) == 127 for char in v):
+        return f"{name}: control characters are not allowed"
     if name in ("LPORT", "RPORT", "CB_PORT", "HTTP_PORT", "WEBPORT"):
         try:
-            p = int(v)
-            if not (1 <= p <= 65535):
-                return f"{name}: порт вне диапазона 1..65535 ({p})"
+            port = int(v)
+            if not 1 <= port <= 65535:
+                return f"{name}: порт вне диапазона 1..65535 ({port})"
         except ValueError:
             return f"{name}: должен быть числом ({v})"
-    return None
-
-
-def interactive_shell(sock: socket.socket, banner: str = "[+] Shell opened"):
-    print(f"\n{C.G}{banner}{C.END}")
-    print(f"{C.DIM}Type 'background' to detach.{C.END}\n")
-    sock.settimeout(0.1)
-    try:
-        while True:
-            try:
-                r, _, _ = select.select([sock, sys.stdin], [], [], 0.5)
-            except (OSError, ValueError):
-                break
-            if sock in r:
-                try:
-                    data = sock.recv(4096)
-                except (socket.timeout, ConnectionResetError):
-                    continue
-                if not data:
-                    print(f"\n{C.Y}[*] Connection closed{C.END}")
-                    break
-                sys.stdout.buffer.write(data)
-                sys.stdout.buffer.flush()
-            if sys.stdin in r:
-                try:
-                    line = sys.stdin.readline()
-                except KeyboardInterrupt:
-                    break
-                if not line or line.strip().lower() in ("background", "bg"):
-                    break
-                try:
-                    sock.sendall(line.encode())
-                except (BrokenPipeError, ConnectionResetError):
-                    break
-    except KeyboardInterrupt:
-        print()
-    finally:
+    if name == "TIMEOUT":
         try:
-            sock.close()
-        except Exception:
-            pass
+            if not 1 <= int(v) <= 3600:
+                return "TIMEOUT: expected 1..3600 seconds"
+        except ValueError:
+            return "TIMEOUT: expected an integer"
+    if name in ("LHOST", "TARGET"):
+        if name == "TARGET" and "://" in v:
+            try:
+                parsed = urlsplit(v)
+                if parsed.scheme not in ("http", "https") or not parsed.hostname:
+                    return "TARGET: expected an http:// or https:// URL"
+                if parsed.username is not None or parsed.password is not None:
+                    return "TARGET: embedded URL credentials are not supported"
+                if any(char.isspace() for char in v):
+                    return "TARGET: spaces must be URL-encoded"
+                if parsed.port is not None and not 1 <= parsed.port <= 65535:
+                    return "TARGET: invalid port"
+                host = parsed.hostname
+            except ValueError as exc:
+                return f"TARGET: invalid URL ({exc})"
+        else:
+            host = v
+        try:
+            address = ipaddress.ip_address(host)
+            if name == "LHOST" and address.version != 4:
+                return "LHOST: IPv6 callbacks are not supported"
+        except ValueError:
+            if re.fullmatch(r"[0-9.]+", host):
+                return f"{name}: invalid IP address"
+            labels = host.rstrip(".").split(".")
+            if len(host) > 253 or not all(
+                re.fullmatch(
+                    r"[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?", label
+                )
+                for label in labels
+            ):
+                return f"{name}: invalid hostname/IP"
+    return None
 
 
 class Module:
@@ -102,25 +101,62 @@ class Module:
     author = ""
     options: Dict[str, Dict[str, Any]] = {}
 
+    def __init__(self):
+        self.options = copy.deepcopy(type(self).options)
+        self._defaults = {
+            key: copy.deepcopy(opt.get("value"))
+            for key, opt in self.options.items()
+        }
+        self.sessions = SessionManager()
+
+    def _option_error(self, key, value):
+        spec = self.options[key]
+        if value is None or value == "":
+            return f"missing {key}" if spec.get("required") else None
+        error = validate_opt(key, value)
+        if error:
+            return error
+        if spec.get("kind") == "url" and not str(value).startswith(
+            ("http://", "https://")
+        ):
+            return f"{key}: include http:// or https://"
+        choices = spec.get("choices")
+        if choices and str(value).lower() not in choices:
+            return f"{key}: choose {', '.join(choices)}"
+        return None
+
     def set(self, k: str, v: Any) -> bool:
-        if k in self.options:
-            self.options[k]["value"] = v
-            return True
-        return False
+        if k not in self.options:
+            return False
+        if isinstance(v, str):
+            v = v.strip()
+        if self.options[k].get("choices") and isinstance(v, str):
+            v = v.lower()
+        error = self._option_error(k, v)
+        if error:
+            raise ValueError(error)
+        self.options[k]["value"] = v
+        return True
 
     def get(self, k: str) -> Any:
-        return self.options[k]["value"]
+        value = self.options[k].get("value")
+        if value in (None, "") and not self.options[k].get("required"):
+            return self._defaults.get(k)
+        return value
+
+    def unset(self, k):
+        if k not in self.options:
+            raise ValueError(f"Unknown option: {k}")
+        self.options[k]["value"] = (
+            None if self.options[k].get("required")
+            else copy.deepcopy(self._defaults[k])
+        )
 
     def validate(self) -> List[str]:
-        errs = []
-        for k, v in self.options.items():
-            if v.get("required") and not v.get("value"):
-                errs.append(f"missing {k}")
-                continue
-            e = validate_opt(k, v.get("value"))
-            if e:
-                errs.append(e)
-        return errs
+        return [
+            error for key in self.options
+            if (error := self._option_error(key, self.get(key)))
+        ]
 
     def run(self) -> None:
         raise NotImplementedError
@@ -132,36 +168,11 @@ class Module:
             print(f"{C.BOLD}Author:{C.END} {self.author}")
 
 
-class Listener:
-    def __init__(self, host: str = "0.0.0.0", port: int = 4444):
-        self.host, self.port = host, port
-
-    def start(self) -> None:
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        s.bind((self.host, self.port))
-        s.listen(1)
-        print(f"{C.G}[+] Listener on {self.host}:{self.port}{C.END}")
-
-        def serve():
-            try:
-                cl, ad = s.accept()
-                print(
-                    f"\n{C.G}[+] Connection from {ad[0]}:{ad[1]}{C.END}"
-                )
-                interactive_shell(cl)
-            except Exception as e:
-                print(f"{C.R}[!] Listener error: {e}{C.END}")
-            finally:
-                s.close()
-
-        threading.Thread(target=serve, daemon=True).start()
-
-
 class Registry:
     def __init__(self, modules_dir: Optional[Path] = None):
         self.modules_dir = modules_dir or (Path(__file__).parent / "modules")
         self.modules: Dict[str, Module] = {}
+        self.sessions = SessionManager()
         self._load()
 
     def _load(self) -> None:
@@ -186,6 +197,7 @@ class Registry:
                         and obj is not Module
                     ):
                         inst = obj()
+                        inst.sessions = self.sessions
                         self.modules[inst.name] = inst
             except Exception as e:
                 print(f"{C.R}[!] Failed to load {f.name}: {e}{C.END}")
@@ -195,7 +207,7 @@ class UI:
     commands = (
         "use", "set", "unset", "show", "options", "run", "exploit",
         "exit", "quit", "back", "help", "info", "modules", "listener",
-        "menu", "home", "search", "banner", "clear",
+        "menu", "home", "search", "banner", "clear", "sessions", "listeners",
     )
 
     def __init__(self, registry: Registry, show_banner=True):
@@ -289,6 +301,7 @@ class UI:
             self.banner()
         self.menu()
         while True:
+            self.announce_sessions()
             try:
                 line = input(self.prompt()).strip()
             except EOFError:
@@ -352,6 +365,10 @@ class UI:
             self.menu()
         elif cmd == "listener":
             self.listener_cmd(args)
+        elif cmd == "listeners":
+            self.list_listeners()
+        elif cmd == "sessions":
+            self.sessions_cmd(args)
         elif cmd == "info":
             self.module_info()
         else:
@@ -380,7 +397,12 @@ class UI:
                     "run / exploit / x",
                     "Validate options and execute the module",
                 ),
-                ("listener <port>", "Start the TCP listener"),
+                ("listener <port> [host]", "Start a listener (default: 0.0.0.0)"),
+                ("listeners", "List TCP listeners"),
+                ("listener stop <id>", "Stop accepting new connections"),
+                ("sessions", "List connections; press Enter to refresh"),
+                ("sessions -i <id>", "Attach; background or Ctrl+C detaches"),
+                ("sessions -k <id>", "Close a session"),
                 ("back", "Unload the selected module"),
                 ("banner / clear", "Print the banner / redraw the screen"),
                 ("exit / quit", "Close WibeH4Ck"),
@@ -463,11 +485,7 @@ class UI:
             return
         k, v = args[0].upper(), " ".join(args[1:])
         if self.current.set(k, v):
-            err = validate_opt(k, v)
-            if err:
-                print(f"{C.Y}{k} => {v} (warning: {err}){C.END}")
-            else:
-                print(f"{C.G}{k} => {v}{C.END}")
+            print(f"{C.G}{k} => {self.current.get(k)}{C.END}")
         else:
             print(f"{C.R}Unknown option: {k}{C.END}")
 
@@ -475,9 +493,8 @@ class UI:
         if not self.current or not args:
             return
         k = args[0].upper()
-        if k in self.current.options:
-            self.current.options[k]["value"] = None
-            print(f"{C.Y}{k} cleared{C.END}")
+        self.current.unset(k)
+        print(f"{C.Y}{k} => {self.current.get(k)!s}{C.END}")
 
     def show(self, args: List[str]):
         if args and args[0].lower() == "modules":
@@ -529,15 +546,56 @@ class UI:
         except Exception as e:
             print(f"{C.R}[!] Exploit error: {type(e).__name__}: {e}{C.END}")
 
+    def announce_sessions(self):
+        while True:
+            try:
+                message = self.registry.sessions.notices.get_nowait()
+            except queue.Empty:
+                return
+            print(f"{C.G}[+] {message}{C.END}")
+
     def listener_cmd(self, args: List[str]):
-        if not args:
-            print(f"{C.R}Usage: listener <port>{C.END}")
+        manager = self.registry.sessions
+        if len(args) == 2 and args[0] == "stop":
+            manager.stop_listener(int(args[1]))
+            print(f"{C.Y}[*] Listener {args[1]} stopped.{C.END}")
             return
-        err = validate_opt("LPORT", args[0])
+        if not 1 <= len(args) <= 2:
+            print(f"{C.R}Usage: listener <port> [host] | listener stop <id>{C.END}")
+            return
+        host = args[1] if len(args) == 2 else "0.0.0.0"
+        err = validate_opt("LPORT", args[0]) or validate_opt("LHOST", host)
         if err:
-            print(f"{C.R}[!] {err}{C.END}")
+            raise ValueError(err)
+        listener = manager.listen(host, int(args[0]))
+        print(f"{C.G}[+] Listener {listener.id} on {host}:{listener.port}{C.END}")
+        self.terminal.note("Use sessions to view connections; Enter refreshes notices.")
+
+    def list_listeners(self):
+        rows = [
+            (item.id, f"{item.host}:{item.port}",
+             "stopped" if item.stopped.is_set() else "listening")
+            for item in self.registry.sessions.listeners()
+        ]
+        self.terminal.table("LISTENERS", ("ID", "Address", "State"), rows)
+
+    def sessions_cmd(self, args):
+        manager = self.registry.sessions
+        if not args:
+            rows = [
+                (item.id, item.peer, "closed" if item.closed.is_set() else "open")
+                for item in manager.sessions()
+            ]
+            self.terminal.table("SESSIONS", ("ID", "Peer", "State"), rows)
+            self.terminal.note("sessions -i <id> = attach | sessions -k <id> = close")
             return
-        Listener(port=int(args[0])).start()
+        if len(args) != 2 or args[0] not in ("-i", "-k"):
+            raise ValueError("Usage: sessions [-i <id> | -k <id>]")
+        session = manager.get(int(args[1]))
+        if args[0] == "-k":
+            session.close()
+        else:
+            session.interact()
 
 
 _ANSI_VALUES = {
@@ -585,25 +643,41 @@ def main():
     configure_colors(a.no_color)
     reg = Registry()
 
-    if a.list:
-        for n, m in sorted(reg.modules.items()):
-            print(f"{n:<22} {m.description}")
-        return
+    try:
+        if a.list:
+            for n, m in sorted(reg.modules.items()):
+                print(f"{n:<22} {m.description}")
+            return
 
-    if a.module:
-        if a.module not in reg.modules:
-            print(f"{C.R}No such module: {a.module}{C.END}")
-            sys.exit(1)
-        m = reg.modules[a.module]
-        for kv in a.option:
-            if "=" in kv:
-                k, v = kv.split("=", 1)
-                m.set(k.upper(), v)
-        errs = m.validate()
-        if errs:
-            print(f"{C.R}Validation errors: {', '.join(errs)}{C.END}")
-            sys.exit(1)
-        m.run()
-        return
+        if a.module:
+            if a.module not in reg.modules:
+                raise ValueError(f"No such module: {a.module}")
+            module = reg.modules[a.module]
+            for kv in a.option:
+                if "=" not in kv:
+                    raise ValueError(f"Invalid option {kv!r}; expected K=V")
+                key, value = kv.split("=", 1)
+                if not module.set(key.upper(), value):
+                    raise ValueError(f"Unknown option: {key}")
+            errs = module.validate()
+            if errs:
+                raise ValueError("Validation errors: " + ", ".join(errs))
+            module.run()
+            # A detached connection from direct mode still needs a console owner.
+            if any(not session.closed.is_set() for session in reg.sessions.sessions()):
+                ui = UI(reg, show_banner=False)
+                ui.current = module
+                ui.run()
+            return
 
-    UI(reg, show_banner=not a.no_banner).run()
+        if a.option:
+            raise ValueError("-o requires -m <module>")
+        UI(reg, show_banner=not a.no_banner).run()
+    except KeyboardInterrupt:
+        print(f"\n{C.Y}[*] Aborted.{C.END}")
+        raise SystemExit(130)
+    except Exception as exc:
+        print(f"{C.R}[!] {exc}{C.END}", file=sys.stderr)
+        raise SystemExit(1)
+    finally:
+        reg.sessions.close()

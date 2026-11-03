@@ -92,7 +92,7 @@ class ConsoleTests(unittest.TestCase):
             socket_factory.assert_not_called()
 
     def test_search_keeps_menu_numbers(self):
-        output = self.capture(lambda: self.ui.list_modules("PHP"))
+        output = self.capture(lambda: self.ui.list_modules("PHP /"))
         self.assertIn("cve_2019_11043", output)
         self.assertIn("cve_2024_4577", output)
         self.assertNotIn("revshell", output)

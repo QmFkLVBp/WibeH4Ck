@@ -20,6 +20,6 @@ class MyExploit(Module):
         print(f"{C.Y}[*] Exploiting {target}:{rport}...{C.END}")
         # --- твоя логика здесь ---
         # from framework import interactive_shell
-        # interactive_shell(sock)
+        # interactive_shell(sock, manager=self.sessions)
 
         print(f"{C.G}[+] done{C.END}")
