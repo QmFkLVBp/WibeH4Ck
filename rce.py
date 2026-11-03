@@ -2,4 +2,4 @@
 from framework import main
 
 if name == "main":
-main()
+    main()
