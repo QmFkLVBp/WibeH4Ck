@@ -18,7 +18,7 @@ BANNER = r"""
 
 def banner():
     print(BANNER)
-    print("  wibeh4ck — WordPress chain for CTF  ·  by @truerawhack\n")
+    print("  wibeh4ck — WordPress chain for CTF \n")
 
 
 def print_recon(r):
