@@ -1,0 +1,2 @@
+curl -s https://www.wordfence.com/api/intelligence/v2/vulnerabilities/production \
+  -o data/wordfence.json
