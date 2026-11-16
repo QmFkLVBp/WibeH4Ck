@@ -237,10 +237,6 @@ def write_report(path, r):
         else:
             add(f"  failed:   {shell.get('error')}")
 
-    add("")
-    add("=" * 78)
-    add("  telegram by @truerawhack")
-    add("=" * 78)
 
     with open(path, "w", encoding="utf-8") as f:
         f.write("\n".join(L) + "\n")
