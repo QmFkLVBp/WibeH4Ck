@@ -1,29 +1,44 @@
+# language: python, file: post/crack.py
 import os, shutil, subprocess, tempfile
 
-
-def crack_hashes(hashes, wordlist_path):
+def crack_hashes(hashes, wordlist, mode=400, timeout=1800):
+    if not hashes:
+        return {}
+    if not os.path.isfile(wordlist):
+        return {"__error__": f"wordlist missing: {wordlist}"}
     if not shutil.which("hashcat"):
-        return {"error": "hashcat not on PATH — install: apt install hashcat",
-                "cracked": {}}
-    if not os.path.isfile(wordlist_path):
-        return {"error": f"wordlist missing: {wordlist_path}", "cracked": {}}
+        return {"__error__": "hashcat not on PATH"}
 
-    fd, hash_file = tempfile.mkstemp(suffix=".txt")
+    fd, hashfile = tempfile.mkstemp(suffix=".txt", text=True)
+    user_by_hash = {}
     try:
         with os.fdopen(fd, "w") as f:
-            f.write("\n".join(hashes))
-        proc = subprocess.run(
-            ["hashcat", "-m", "400", "-a", "0", hash_file, wordlist_path,
-             "--quiet", "--potfile-disable", "--force"],
-            capture_output=True, text=True, timeout=900,
-        )
+            for u, h in hashes.items():
+                h = h.strip()
+                f.write(h + "\n")
+                user_by_hash[h] = u
+
+        run = subprocess.run(
+            ["hashcat", "-m", str(mode), "-a", "0", hashfile, wordlist,
+             "--potfile-disable", "--quiet", "--force",
+             "--status", "--status-timer=15"],
+            capture_output=True, text=True, timeout=timeout)
+
+        show = subprocess.run(
+            ["hashcat", "-m", str(mode), hashfile,
+             "--potfile-disable", "--show", "--quiet", "--force"],
+            capture_output=True, text=True)
+
         cracked = {}
-        for line in proc.stdout.splitlines():
-            if ":" in line:
-                h, p = line.rsplit(":", 1)
-                cracked[h] = p
-        return {"cracked": cracked, "raw": proc.stdout[-2000:]}
+        for line in show.stdout.splitlines():
+            if ":" not in line:
+                continue
+            h, pw = line.strip().split(":", 1)
+            if h in user_by_hash:
+                cracked[user_by_hash[h]] = pw
+        return cracked
     except subprocess.TimeoutExpired:
-        return {"error": "hashcat timed out", "cracked": {}}
+        return {"__error__": f"hashcat timeout {timeout}s"}
     finally:
-        os.unlink(hash_file)
+        try: os.unlink(hashfile)
+        except OSError: pass
